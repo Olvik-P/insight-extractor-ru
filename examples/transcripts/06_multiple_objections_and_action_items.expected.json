@@ -1,0 +1,13 @@
+{
+  "_note": "budget_qualification originally expected [0, 2], assuming 'constrained budget' means 'poorly qualified'. Live testing showed the model reasonably scores this on how CLEARLY the budget situation was discussed, not how favorable it is -- the client explicitly explained the CFO's IT-budget cut, which is a well-qualified (if unfavorable) budget picture. Widened to accept that legitimate reading too.",
+  "client_pain_keywords": ["не справляется", "рост", "объём"],
+  "objection_keyword_groups": [["бюджет"], ["дорог"], ["срок", "месяц"]],
+  "min_action_items": 2,
+  "next_step_keywords": ["понедельник"],
+  "criteria_score_ranges": {
+    "discovery_depth": [1, 3],
+    "budget_qualification": [0, 3],
+    "talk_ratio": [1.0, 1.0]
+  },
+  "overall_score_range": [30, 85]
+}

@@ -1,0 +1,12 @@
+{
+  "client_pain_keywords": ["теря", "15%"],
+  "min_action_items": 1,
+  "next_step_keywords": ["демо", "11:00", "завтра"],
+  "criteria_score_ranges": {
+    "discovery_depth": [2, 3],
+    "budget_qualification": [2, 3],
+    "next_step_clarity": [2, 3],
+    "talk_ratio": [1.0, 1.0]
+  },
+  "overall_score_range": [65, 100]
+}

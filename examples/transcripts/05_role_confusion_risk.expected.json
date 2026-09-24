@@ -1,0 +1,12 @@
+{
+  "_note": "Complaints about the CURRENT provider are the client's pain, not an objection to the manager's own pitch — corrected after live testing showed the model (correctly) puts this in client_pain rather than objections.",
+  "client_pain_keywords": ["поддержк", "аналитик"],
+  "min_action_items": 1,
+  "next_step_keywords": ["пятниц"],
+  "criteria_score_ranges": {
+    "discovery_depth": [1, 3],
+    "next_step_clarity": [2, 3],
+    "talk_ratio": [2.0, 2.0]
+  },
+  "overall_score_range": [40, 90]
+}

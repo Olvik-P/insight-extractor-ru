@@ -1,0 +1,9 @@
+{
+  "client_pain_expected_none": true,
+  "criteria_score_ranges": {
+    "discovery_depth": [0, 1],
+    "budget_qualification": [0, 1],
+    "talk_ratio": [0.0, 0.0]
+  },
+  "overall_score_range": [0, 40]
+}
