@@ -17,6 +17,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
+    "ruff>=0.15",
+    "pre-commit>=4.0",
 ]
 
 [project.scripts]
@@ -27,3 +29,14 @@ include = ["insight_extractor_ru*"]
 
 [tool.pytest.ini_options]
 testpaths = ["insight_extractor_ru/tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["insight_extractor_ru.egg-info"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["insight_extractor_ru"]
