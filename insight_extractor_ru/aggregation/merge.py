@@ -12,6 +12,8 @@ Decisions 7-8; see also
 
 from __future__ import annotations
 
+from collections import defaultdict
+
 from insight_extractor_ru.aggregation.tag_normalization import CanonicalTagTable
 from insight_extractor_ru.core.models import (
     Chunk,
@@ -47,12 +49,12 @@ def merge_criteria(
     If no chunk has resolvable evidence for a criterion, the (equivalent)
     empty/zero-confidence result is kept.
     """
-    resolved_by_id: dict[str, list[ResolvedCriterionResult]] = {}
+    resolved_by_id: defaultdict[str, list[ResolvedCriterionResult]] = defaultdict(list)
     for chunk_result in chunk_results:
         chunk = chunks_by_index[chunk_result.chunk_index]
         for criterion in chunk_result.criteria:
             resolved = resolve_evidence(criterion, chunk)
-            resolved_by_id.setdefault(criterion.id, []).append(resolved)
+            resolved_by_id[criterion.id].append(resolved)
 
     merged: dict[str, ResolvedCriterionResult] = {}
     for criterion_id, results in resolved_by_id.items():

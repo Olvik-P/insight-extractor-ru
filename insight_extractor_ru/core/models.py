@@ -9,12 +9,12 @@ of copied quote text).
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field, model_validator
 
 
-class Role(str, Enum):
+class Role(StrEnum):
     """Speaker role for a transcript turn."""
 
     MANAGER = "manager"

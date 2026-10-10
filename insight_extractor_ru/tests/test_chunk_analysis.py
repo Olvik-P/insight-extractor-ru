@@ -70,8 +70,6 @@ class TestAnalyzeChunk:
         assert result.criteria[0].evidence[0].turn_index == 2
 
     def test_schema_invalid_response_raises_after_fallback_exhausted(self) -> None:
-        adapter = _StubAdapter(structured_json=None)
-
         class _FailingFallback(_StubAdapter):
             def _request_json_mode(self, prompt: str) -> str:
                 return json.dumps({"criteria": [{"id": "not_a_real_criterion"}]})

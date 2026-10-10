@@ -4,17 +4,15 @@ from __future__ import annotations
 
 import httpx
 
-from insight_extractor_ru.integrations.llm._http import (
-    DEFAULT_TIMEOUT_SECONDS,
-    post_chat_completion,
+from insight_extractor_ru.integrations.llm.openai_compatible import (
+    ChatCompletionsAdapter,
 )
-from insight_extractor_ru.integrations.llm.base import LLMAdapter, LLMAdapterError
 
 _DEFAULT_BASE_URL = "https://api.deepseek.com"
 _TOOL_NAME = "submit_chunk_analysis"
 
 
-class DeepSeekAdapter(LLMAdapter):
+class DeepSeekAdapter(ChatCompletionsAdapter):
     """Targets DeepSeek's OpenAI-compatible API.
 
     Uses function calling with ``strict: true`` (server-side JSON-Schema
@@ -37,6 +35,7 @@ class DeepSeekAdapter(LLMAdapter):
     """
 
     supports_structured_output = True
+    provider_name = "DeepSeek"
 
     def __init__(
         self,
@@ -45,16 +44,11 @@ class DeepSeekAdapter(LLMAdapter):
         base_url: str = _DEFAULT_BASE_URL,
         client: httpx.Client | None = None,
     ) -> None:
+        super().__init__(model=model, base_url=base_url, client=client)
         self.api_key = api_key
-        self.model = model
-        self.base_url = base_url.rstrip("/")
-        self.client = client or httpx.Client(timeout=DEFAULT_TIMEOUT_SECONDS)
 
-    def _headers(self) -> dict[str, str]:
-        return {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
+    def _auth_header(self) -> str:
+        return f"Bearer {self.api_key}"
 
     def _request_structured(self, prompt: str, schema: dict) -> str:
         payload = {
@@ -77,16 +71,11 @@ class DeepSeekAdapter(LLMAdapter):
                 "function": {"name": _TOOL_NAME},
             },
         }
-        body = post_chat_completion(
-            self.client, f"{self.base_url}/chat/completions", self._headers(), payload
-        )
-        try:
-            tool_calls = body["choices"][0]["message"]["tool_calls"]
-            return tool_calls[0]["function"]["arguments"]
-        except (KeyError, IndexError, TypeError) as exc:
-            raise LLMAdapterError(
-                f"unexpected DeepSeek response shape: {body!r}"
-            ) from exc
+        return self._complete(payload, self._tool_call_arguments)
+
+    @staticmethod
+    def _tool_call_arguments(body: dict) -> str:
+        return body["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"]
 
     def _request_json_mode(self, prompt: str) -> str:
         payload = {
@@ -95,12 +84,4 @@ class DeepSeekAdapter(LLMAdapter):
             "thinking": {"type": "disabled"},
             "response_format": {"type": "json_object"},
         }
-        body = post_chat_completion(
-            self.client, f"{self.base_url}/chat/completions", self._headers(), payload
-        )
-        try:
-            return body["choices"][0]["message"]["content"]
-        except (KeyError, IndexError, TypeError) as exc:
-            raise LLMAdapterError(
-                f"unexpected DeepSeek response shape: {body!r}"
-            ) from exc
+        return self._complete(payload, self._message_content)

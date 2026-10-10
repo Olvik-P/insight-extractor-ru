@@ -12,17 +12,15 @@ from __future__ import annotations
 
 import httpx
 
-from insight_extractor_ru.integrations.llm._http import (
-    DEFAULT_TIMEOUT_SECONDS,
-    post_chat_completion,
+from insight_extractor_ru.integrations.llm.openai_compatible import (
+    ChatCompletionsAdapter,
 )
-from insight_extractor_ru.integrations.llm.base import LLMAdapter, LLMAdapterError
 
 _DEFAULT_BASE_URL = "https://gigachat.devices.sberbank.ru/api/v1"
 _FUNCTION_NAME = "submit_chunk_analysis"
 
 
-class GigaChatAdapter(LLMAdapter):
+class GigaChatAdapter(ChatCompletionsAdapter):
     """Targets GigaChat's chat completions API.
 
     Uses ``function_calling`` (GigaChat's default structured-output
@@ -33,6 +31,7 @@ class GigaChatAdapter(LLMAdapter):
     """
 
     supports_structured_output = True
+    provider_name = "GigaChat"
 
     def __init__(
         self,
@@ -41,16 +40,11 @@ class GigaChatAdapter(LLMAdapter):
         base_url: str = _DEFAULT_BASE_URL,
         client: httpx.Client | None = None,
     ) -> None:
+        super().__init__(model=model, base_url=base_url, client=client)
         self.access_token = access_token
-        self.model = model
-        self.base_url = base_url.rstrip("/")
-        self.client = client or httpx.Client(timeout=DEFAULT_TIMEOUT_SECONDS)
 
-    def _headers(self) -> dict[str, str]:
-        return {
-            "Authorization": f"Bearer {self.access_token}",
-            "Content-Type": "application/json",
-        }
+    def _auth_header(self) -> str:
+        return f"Bearer {self.access_token}"
 
     def _request_structured(self, prompt: str, schema: dict) -> str:
         payload = {
@@ -65,15 +59,11 @@ class GigaChatAdapter(LLMAdapter):
             ],
             "function_call": {"name": _FUNCTION_NAME},
         }
-        body = post_chat_completion(
-            self.client, f"{self.base_url}/chat/completions", self._headers(), payload
-        )
-        try:
-            return body["choices"][0]["message"]["function_call"]["arguments"]
-        except (KeyError, IndexError, TypeError) as exc:
-            raise LLMAdapterError(
-                f"unexpected GigaChat response shape: {body!r}"
-            ) from exc
+        return self._complete(payload, self._function_call_arguments)
+
+    @staticmethod
+    def _function_call_arguments(body: dict) -> str:
+        return body["choices"][0]["message"]["function_call"]["arguments"]
 
     def _request_json_mode(self, prompt: str) -> str:
         payload = {
@@ -81,12 +71,4 @@ class GigaChatAdapter(LLMAdapter):
             "messages": [{"role": "user", "content": prompt}],
             "response_format": {"type": "json_object"},
         }
-        body = post_chat_completion(
-            self.client, f"{self.base_url}/chat/completions", self._headers(), payload
-        )
-        try:
-            return body["choices"][0]["message"]["content"]
-        except (KeyError, IndexError, TypeError) as exc:
-            raise LLMAdapterError(
-                f"unexpected GigaChat response shape: {body!r}"
-            ) from exc
+        return self._complete(payload, self._message_content)

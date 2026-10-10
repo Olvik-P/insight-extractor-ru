@@ -15,10 +15,11 @@ back-then-retry flow lives here once, shared by all of them.
 from __future__ import annotations
 
 import json
+import logging
 from abc import ABC, abstractmethod
-from typing import Callable, TypeVar
+from collections.abc import Callable
 
-T = TypeVar("T")
+logger = logging.getLogger(__name__)
 
 
 class LLMAdapterError(Exception):
@@ -60,7 +61,7 @@ class LLMAdapter(ABC):
         fails.
         """
 
-    def analyze_chunk(
+    def analyze_chunk[T](
         self, prompt: str, schema: dict, validate: Callable[[dict], T]
     ) -> T:
         """Get a schema-shaped, validated result for one rendered chunk.
@@ -73,13 +74,18 @@ class LLMAdapter(ABC):
             try:
                 raw_text = self._request_structured(prompt, schema)
                 return validate(json.loads(raw_text))
-            except Exception:
+            except Exception as exc:
                 # Fall through to the json_object + retry fallback path.
-                pass
+                logger.warning(
+                    "structured output failed (%s), using json_object fallback",
+                    type(exc).__name__,
+                )
+                # Full text may embed the provider's whole response body.
+                logger.debug("structured output failure detail: %s", exc)
 
         return self._request_with_fallback(prompt, validate)
 
-    def _request_with_fallback(
+    def _request_with_fallback[T](
         self, prompt: str, validate: Callable[[dict], T]
     ) -> T:
         current_prompt = prompt

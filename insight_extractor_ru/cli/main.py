@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -52,16 +53,16 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--output", help="Write result JSON here instead of stdout")
     args = parser.parse_args(argv)
 
-    with open(args.transcript, encoding="utf-8") as transcript_file:
-        transcript = Transcript.model_validate(json.load(transcript_file))
+    transcript = Transcript.model_validate(
+        json.loads(Path(args.transcript).read_text(encoding="utf-8"))
+    )
 
     adapter = _build_adapter(args.provider)
     result = run_pipeline(transcript, adapter)
 
     output_json = result.model_dump_json(indent=2)
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as output_file:
-            output_file.write(output_json)
+        Path(args.output).write_text(output_json, encoding="utf-8")
     else:
         print(output_json)
 
